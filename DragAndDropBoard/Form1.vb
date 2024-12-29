@@ -329,7 +329,7 @@ Public Class Form1
         For i As Integer = 0 To Math.Ceiling(Me.Size.Width / 168)
             For i2 As Integer = 0 To Math.Ceiling(Me.Size.Height / 168)
                 bgTempGraphics.DrawImage(My.Resources.board, i * 168, i2 * 168, 168, 168)
-                bgTempGraphics.DrawString("DEV VER 1.2", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 168, i2 * 168)
+                bgTempGraphics.DrawString("", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 168, i2 * 168)
             Next
         Next
         bg = bgTemp
