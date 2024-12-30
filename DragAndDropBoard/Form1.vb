@@ -412,12 +412,18 @@ Public Class Form1
     Private Sub PictureBox1_MouseUp(sender As Object, e As MouseEventArgs) Handles PictureBox1.MouseUp
         isMouseDown = False
         If Not didTheMouseMove And isEditing Then
+            Dim imgnumber As Integer = 0
+            Dim imgimg As BoardImage
             For Each img As BoardImage In listOfImages
                 If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Image.Width, img.Image.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
-                    listOfPins.Add(New Pin(img, Brushes.Red, e.X, e.Y) With {.ID = publicLastID})
-                    publicLastID += 1
+                    imgnumber += 1
+                    imgimg = img
                 End If
             Next
+            If imgnumber = 1 Then
+                listOfPins.Add(New Pin(imgimg, Brushes.Red, e.X, e.Y) With {.ID = publicLastID})
+                publicLastID += 1
+            End If
         Else
             If isEditing Then
                 For Each pin As Pin In listOfPins
