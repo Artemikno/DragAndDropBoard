@@ -35,12 +35,13 @@ Partial Class Form1
         Me.ToggleModesMoveEditToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripComboBox1 = New System.Windows.Forms.ToolStripComboBox()
         Me.ToolStripTextBox1 = New System.Windows.Forms.ToolStripTextBox()
+        Me.DeleteModeToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
         'MenuStrip1
         '
-        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.ZoomToolStripMenuItem, Me.OffsetToolStripMenuItem, Me.ToggleModesMoveEditToolStripMenuItem, Me.ToolStripComboBox1, Me.ToolStripTextBox1})
+        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.ZoomToolStripMenuItem, Me.OffsetToolStripMenuItem, Me.DeleteModeToolStripMenuItem, Me.ToggleModesMoveEditToolStripMenuItem, Me.ToolStripComboBox1, Me.ToolStripTextBox1})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Size = New System.Drawing.Size(800, 27)
@@ -57,13 +58,13 @@ Partial Class Form1
         'OpenToolStripMenuItem
         '
         Me.OpenToolStripMenuItem.Name = "OpenToolStripMenuItem"
-        Me.OpenToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.OpenToolStripMenuItem.Size = New System.Drawing.Size(123, 22)
         Me.OpenToolStripMenuItem.Text = "Open..."
         '
         'SaveAsToolStripMenuItem
         '
         Me.SaveAsToolStripMenuItem.Name = "SaveAsToolStripMenuItem"
-        Me.SaveAsToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.SaveAsToolStripMenuItem.Size = New System.Drawing.Size(123, 22)
         Me.SaveAsToolStripMenuItem.Text = "Save As..."
         '
         'ZoomToolStripMenuItem
@@ -125,6 +126,12 @@ Partial Class Form1
         Me.ToolStripTextBox1.Size = New System.Drawing.Size(160, 23)
         Me.ToolStripTextBox1.Text = "PLEASE DO NOT USE ZOOM"
         '
+        'DeleteModeToolStripMenuItem
+        '
+        Me.DeleteModeToolStripMenuItem.Name = "DeleteModeToolStripMenuItem"
+        Me.DeleteModeToolStripMenuItem.Size = New System.Drawing.Size(86, 23)
+        Me.DeleteModeToolStripMenuItem.Text = "Delete mode"
+        '
         'Form1
         '
         Me.AllowDrop = True
@@ -154,4 +161,5 @@ Partial Class Form1
     Friend WithEvents FileToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents OpenToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SaveAsToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents DeleteModeToolStripMenuItem As ToolStripMenuItem
 End Class

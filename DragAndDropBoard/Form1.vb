@@ -28,11 +28,13 @@ Public Class Form1
     Private imageEdited As Object2D
     Private publicLastID As Integer = 0
     Private sawConnError As Boolean = False
+    Private isDeletingSomthing = False
 
     Class Object2D
         Property ID As Integer
         Property X As Integer
         Property Y As Integer
+        Property DeleteMe As Boolean
 
         Public Overrides Function ToString() As String
             Return String.Concat("Object2D#", X, "#", Y, "#", ID)
@@ -319,6 +321,9 @@ Public Class Form1
         For Each obj As BoardImage In listOfImages
             listOfString = String.Concat(listOfString, obj.ToString(), "|")
         Next
+        For Each obj As Note In listOfNotes
+            listOfString = String.Concat(listOfString, obj.ToString(), "|")
+        Next
         listOfString.TrimEnd("|")
 
         If saveFileDialog1.ShowDialog() = DialogResult.OK Then
@@ -425,13 +430,14 @@ Public Class Form1
             g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X, note.Y)
         Next
         For Each conn As Connection In listOfConnections
-            If conn.StartingLocation IsNot Nothing AndAlso conn.DestinationLocation IsNot Nothing Then
+            If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
                 g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
             Else
                 If Not sawConnError Then
-                    MessageBox.Show("Connection drawing error!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    MessageBox.Show(String.Concat("Connection drawing error!", Environment.NewLine, "Removing all connections with errors!"), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                     sawConnError = True
                 End If
+                listOfConnections.Remove(conn)
             End If
         Next
 
@@ -493,12 +499,40 @@ Public Class Form1
                 PictureBox1.Invalidate()
             End If
         Else
-            Me.Cursor = Cursors.Default
+            If Not isDeletingSomthing Then
+                Me.Cursor = Cursors.Default
+            Else
+                Me.Cursor = Cursors.No
+            End If
         End If
     End Sub
 
     Private Sub PictureBox1_MouseUp(sender As Object, e As MouseEventArgs) Handles PictureBox1.MouseUp
         isMouseDown = False
+        If isDeletingSomthing Then
+            isDeletingSomthing = False
+            If Not didTheMouseMove Then
+                For Each obj As Pin In listOfPins
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                        listOfPins.Remove(obj)
+                        Return
+                    End If
+                Next
+                For Each obj As Note In listOfNotes
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                        listOfNotes.Remove(obj)
+                        Return
+                    End If
+                Next
+                For Each obj As BoardImage In listOfImages
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                        listOfImages.Remove(obj)
+                        Return
+                    End If
+                Next
+            End If
+            Return
+        End If
         If Not didTheMouseMove And isEditing Then
             Dim imgnumber As Integer = 0
             Dim imgimg As Object2D
@@ -629,5 +663,9 @@ Public Class Form1
     Private Sub OpenToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OpenToolStripMenuItem.Click
         LoadFile()
         PictureBox1.Invalidate()
+    End Sub
+
+    Private Sub DeleteModeToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DeleteModeToolStripMenuItem.Click
+        isDeletingSomthing = True
     End Sub
 End Class
