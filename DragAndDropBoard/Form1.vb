@@ -18,12 +18,14 @@ Public Class Form1
     Private zoomCursor = New Cursor(New IO.MemoryStream(My.Resources.zoomcursor_uncolored))
     Private WithEvents PictureBox1 As New DoublePanel
     Private bg As Bitmap
+    Private boardImg As New Bitmap(512, 512)
     Private listOfPins As New List(Of Pin)
     Private listOfImages As New List(Of BoardImage)
+    Private listOfNotes As New List(Of Note)
     Private listOfConnections As New List(Of Connection)
     Private startingPinTempValue As Pin
     Private isEditing = True
-    Private imageEdited As BoardImage
+    Private imageEdited As Object2D
     Private publicLastID As Integer = 0
     Private sawConnError As Boolean = False
 
@@ -56,8 +58,8 @@ Public Class Form1
     Class Pin
         Inherits Object2D
         Property Color As Brush
-        Property Parent As BoardImage
-        Public Sub New(Parent As BoardImage, Color As Brush, X As Integer, Y As Integer)
+        Property Parent As Object2D
+        Public Sub New(Parent As Object2D, Color As Brush, X As Integer, Y As Integer)
             Me.Parent = Parent
             Me.Color = Color
             Me.X = X
@@ -85,6 +87,34 @@ Public Class Form1
         End Function
     End Class
 
+    Class Note
+        Inherits Object2D
+        Property Color As Brush
+        Property Note As String
+        Property Sizedata As Size
+        Public Sub New(Note As String, X As Integer, Y As Integer, SizeData As Size)
+            If Note.Equals("") Then
+                Throw New InvalidOperationException("Invalid condition for creating this object.")
+                Return
+            End If
+            Me.Note = Note
+            Me.X = X
+            Me.Y = Y
+            Me.Sizedata = SizeData
+            Me.Color = GetRandomSolidBrush()
+        End Sub
+
+        Public Overrides Function ToString() As String
+            Return String.Concat("Note#", X, "#", Y, "#", Note, "#", Sizedata.Height, "#", Sizedata.Width, "#", ID)
+        End Function
+
+        Public Function GetRandomSolidBrush() As SolidBrush
+            Dim rand As New Random()
+            Dim randomColor As Color = Drawing.Color.FromArgb(rand.Next(16) * 16, rand.Next(16) * 16, rand.Next(16) * 16)
+            Return New SolidBrush(randomColor)
+        End Function
+    End Class
+
     Private Sub LoadFile()
         Dim myStream As Stream
         Dim openFileDialog1 As New OpenFileDialog With {
@@ -104,6 +134,7 @@ Public Class Form1
                 listOfPins.Clear()
                 listOfConnections.Clear()
                 listOfImages.Clear()
+                listOfNotes.Clear()
 
                 ' Split the data into individual object strings
                 Dim objectStrings As String() = loadedData.Split("|"c)
@@ -113,18 +144,30 @@ Public Class Form1
                     If objStr.StartsWith("BoardImage#") Then
                         Dim data As String() = objStr.Substring(11).Split("#"c)
                         Dim tag As String = data(2)
-                        Dim img As Bitmap = Nothing
+                        Dim img As Bitmap
                         If IO.File.Exists(tag) Then
-                            img = New Bitmap(tag)
-                            img.Tag = tag
+                            img = New Bitmap(tag) With {
+                                .Tag = tag
+                            }
                         Else
                             MessageBox.Show($"Image file not found: {tag}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                             Continue For
                         End If
                         Dim boardImage As New BoardImage(img, Integer.Parse(data(0)), Integer.Parse(data(1)), img.Tag, New Size(data(4), data(3))) With {
-                        .ID = Integer.Parse(data(5))
-                    }
+                            .ID = Integer.Parse(data(5))
+                        }
                         listOfImages.Add(boardImage)
+                    End If
+                Next
+
+                ' Load Notes
+                For Each objStr As String In objectStrings
+                    If objStr.StartsWith("Note#") Then
+                        Dim data As String() = objStr.Substring(5).Split("#"c)
+                        Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                            .ID = Integer.Parse(data(5))
+                        }
+                        listOfNotes.Add(pin)
                     End If
                 Next
 
@@ -135,8 +178,8 @@ Public Class Form1
                         Dim parentID As Integer = Integer.Parse(data(2))
                         Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
                         Dim pin As New Pin(parent, Brushes.Red, Integer.Parse(data(0)), Integer.Parse(data(1))) With {
-                        .ID = Integer.Parse(data(3))
-                    }
+                            .ID = Integer.Parse(data(3))
+                        }
                         listOfPins.Add(pin)
                     End If
                 Next
@@ -151,8 +194,8 @@ Public Class Form1
                         Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
                         Dim destPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, destPinID)
                         Dim connection As New Connection(color, startPin, destPin) With {
-                        .ID = Integer.Parse(data(3))
-                    }
+                            .ID = Integer.Parse(data(3))
+                        }
                         listOfConnections.Add(connection)
                     End If
                 Next
@@ -172,6 +215,7 @@ Public Class Form1
             listOfPins.Clear()
             listOfConnections.Clear()
             listOfImages.Clear()
+            listOfNotes.Clear()
 
             ' Split the data into individual object strings
             Dim objectStrings As String() = loadedData.Split("|"c)
@@ -181,10 +225,11 @@ Public Class Form1
                 If objStr.StartsWith("BoardImage#") Then
                     Dim data As String() = objStr.Substring(11).Split("#"c)
                     Dim tag As String = data(2)
-                    Dim img As Bitmap = Nothing
+                    Dim img As Bitmap
                     If IO.File.Exists(tag) Then
-                        img = New Bitmap(tag)
-                        img.Tag = tag
+                        img = New Bitmap(tag) With {
+                            .Tag = tag
+                        }
                     Else
                         MessageBox.Show($"Image file not found: {tag}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Continue For
@@ -193,6 +238,17 @@ Public Class Form1
                         .ID = Integer.Parse(data(5))
                     }
                     listOfImages.Add(boardImage)
+                End If
+            Next
+
+            ' Load Notes
+            For Each objStr As String In objectStrings
+                If objStr.StartsWith("Note#") Then
+                    Dim data As String() = objStr.Substring(5).Split("#"c)
+                    Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                            .ID = Integer.Parse(data(5))
+                        }
+                    listOfNotes.Add(pin)
                 End If
             Next
 
@@ -323,23 +379,50 @@ Public Class Form1
         buffer.Render(e.Graphics)
     End Sub
 
+    Public Function GetOppositeSolidBrush(originalBrush As SolidBrush) As SolidBrush
+        Dim originalColor As Color = originalBrush.Color
+        Dim oppositeColor As Color = Color.FromArgb(255 - originalColor.R, 255 - originalColor.G, 255 - originalColor.B)
+        Return New SolidBrush(oppositeColor)
+    End Function
+
     Private Sub SaveTiledBackground()
         Dim bgTemp As New Bitmap(Me.Size.Width, Me.Size.Height)
         Dim bgTempGraphics As Graphics = Graphics.FromImage(bgTemp)
-        For i As Integer = 0 To Math.Ceiling(Me.Size.Width / 168)
-            For i2 As Integer = 0 To Math.Ceiling(Me.Size.Height / 168)
-                bgTempGraphics.DrawImage(My.Resources.board, i * 168, i2 * 168, 168, 168)
-                bgTempGraphics.DrawString("", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 168, i2 * 168)
+        For i As Integer = 0 To Math.Ceiling(Me.Size.Width / 512)
+            For i2 As Integer = 0 To Math.Ceiling(Me.Size.Height / 512)
+                Try
+                    bgTempGraphics.DrawImageUnscaled(boardImg, i * 512, i2 * 512)
+                Catch
+                    bgTempGraphics.DrawString("Error!", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 512, i2 * 512)
+                End Try
+                bgTempGraphics.DrawString("", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 512, i2 * 512)
             Next
         Next
-        bg = bgTemp
-        bgTemp = Nothing
-        bgTempGraphics = Nothing
+        bg = bgTemp.Clone()
+        bgTemp.Dispose()
+        bgTempGraphics.Dispose()
+    End Sub
+
+    Private Sub PrebuildBoard()
+        Dim boardTemp As Bitmap = boardImg
+        Dim g As Graphics = Graphics.FromImage(boardTemp)
+        For x As Integer = 0 To 16
+            For y As Integer = 0 To 16
+                g.DrawImage(My.Resources.board, x * 32, y * 32, 32, 32)
+            Next
+        Next
+        boardImg = boardTemp.Clone()
+        boardTemp.Dispose()
+        g.Dispose()
     End Sub
 
     Private Sub DrawAdvancedGraphics(g As Graphics)
         For Each img As BoardImage In listOfImages
             g.DrawImage(img.Image, CInt(img.X + xOffset + imageSize / 2), CInt(img.Y + yOffset + imageSize / 2), CInt(img.Sizedata.Width * imageSize), CInt(img.Sizedata.Height * imageSize))
+        Next
+        For Each note As Note In listOfNotes
+            g.FillRectangle(note.Color, CInt(note.X + xOffset + imageSize / 2), CInt(note.Y + yOffset + imageSize / 2), CInt(note.Sizedata.Width * imageSize), CInt(note.Sizedata.Height * imageSize))
+            g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X, note.Y)
         Next
         For Each conn As Connection In listOfConnections
             If conn.StartingLocation IsNot Nothing AndAlso conn.DestinationLocation IsNot Nothing Then
@@ -371,8 +454,13 @@ Public Class Form1
             Next
             If startingPinTempValue Is Nothing Then
                 For Each img As BoardImage In listOfImages
-                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Image.Width, img.Image.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
                         imageEdited = img
+                    End If
+                Next
+                For Each note As Note In listOfNotes
+                    If Not Rectangle.Intersect(New Rectangle(note.X, note.Y, note.Sizedata.Width, note.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                        imageEdited = note
                     End If
                 Next
             End If
@@ -413,9 +501,15 @@ Public Class Form1
         isMouseDown = False
         If Not didTheMouseMove And isEditing Then
             Dim imgnumber As Integer = 0
-            Dim imgimg As BoardImage
+            Dim imgimg As Object2D
             For Each img As BoardImage In listOfImages
-                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Image.Width, img.Image.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    imgnumber += 1
+                    imgimg = img
+                End If
+            Next
+            For Each img As Note In listOfNotes
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
                     imgnumber += 1
                     imgimg = img
                 End If
@@ -423,13 +517,27 @@ Public Class Form1
             If imgnumber = 1 Then
                 listOfPins.Add(New Pin(imgimg, Brushes.Red, e.X, e.Y) With {.ID = publicLastID})
                 publicLastID += 1
+            ElseIf imgnumber = 0 Then
+                Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
+                If Not it.Equals("") Then
+                    listOfNotes.Add(New Note(it, e.X, e.Y, New Size(128, 128)))
+                End If
             End If
         Else
             If isEditing Then
                 For Each pin As Pin In listOfPins
                     If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
-                        listOfConnections.Add(New Connection(Pens.Red, startingPinTempValue, pin) With {.ID = publicLastID})
-                        publicLastID += 1
+                        Dim i = 0
+                        For Each conn As Connection In listOfConnections
+                            If conn.StartingLocation.Equals(startingPinTempValue) And conn.DestinationLocation.Equals(pin) Then
+                                i += 1
+                                listOfConnections.Remove(conn)
+                            End If
+                        Next
+                        If i = 0 Then
+                            listOfConnections.Add(New Connection(Pens.Red, startingPinTempValue, pin) With {.ID = publicLastID})
+                            publicLastID += 1
+                        End If
                     End If
                 Next
             End If
@@ -441,9 +549,7 @@ Public Class Form1
 
     Private Sub PictureBox1_Resize(sender As Object, e As EventArgs) Handles PictureBox1.Resize
         If PictureBox1.Width > 0 And PictureBox1.Height > 0 Then
-            If buffer IsNot Nothing Then
-                buffer.Dispose()
-            End If
+            buffer?.Dispose()
             If context IsNot Nothing Then
                 buffer = context.Allocate(PictureBox1.CreateGraphics(), PictureBox1.DisplayRectangle)
                 buffer.Graphics.InterpolationMode = Drawing2D.InterpolationMode.NearestNeighbor
@@ -466,14 +572,13 @@ Public Class Form1
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ToolStripComboBox1.Text = "256"
+        PrebuildBoard()
         SaveTiledBackground()
         PictureBox1.Dock = DockStyle.Fill
         Me.Controls.Add(PictureBox1)
         context = BufferedGraphicsManager.Current
         If PictureBox1.Width > 0 And PictureBox1.Height > 0 Then
-            If buffer IsNot Nothing Then
-                buffer.Dispose()
-            End If
+            buffer?.Dispose()
             buffer = context.Allocate(PictureBox1.CreateGraphics(), PictureBox1.DisplayRectangle)
             buffer.Graphics.InterpolationMode = Drawing2D.InterpolationMode.NearestNeighbor
             buffer.Graphics.SmoothingMode = Drawing2D.SmoothingMode.HighSpeed
