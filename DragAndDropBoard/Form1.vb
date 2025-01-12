@@ -27,7 +27,7 @@ Public Class Form1
     Private isEditing = True
     Private imageEdited As Object2D
     Private publicLastID As Integer = 0
-    Private sawConnError As Boolean = False
+    Private sawConnError As Boolean = True
     Private isDeletingSomthing = False
 
     Class Object2D
@@ -429,7 +429,7 @@ Public Class Form1
             g.FillRectangle(note.Color, CInt(note.X + xOffset + imageSize / 2), CInt(note.Y + yOffset + imageSize / 2), CInt(note.Sizedata.Width * imageSize), CInt(note.Sizedata.Height * imageSize))
             g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X, note.Y)
         Next
-        For Each conn As Connection In listOfConnections
+        For Each conn As Connection In listOfConnections.ToArray()
             If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
                 g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
             Else
@@ -451,7 +451,9 @@ Public Class Form1
         mouseStartingPoint.X = e.X
         mouseStartingPoint.Y = e.Y
         didTheMouseMove = False
-        Me.Cursor = zoomCursor
+        If Not isDeletingSomthing Then
+            Me.Cursor = zoomCursor
+        End If
         If isEditing Then
             For Each pin As Pin In listOfPins
                 If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
@@ -510,23 +512,35 @@ Public Class Form1
     Private Sub PictureBox1_MouseUp(sender As Object, e As MouseEventArgs) Handles PictureBox1.MouseUp
         isMouseDown = False
         If isDeletingSomthing Then
-            isDeletingSomthing = False
             If Not didTheMouseMove Then
                 For Each obj As Pin In listOfPins
                     If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
                         listOfPins.Remove(obj)
+                        PictureBox1.Invalidate()
                         Return
                     End If
                 Next
                 For Each obj As Note In listOfNotes
                     If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
                         listOfNotes.Remove(obj)
+                        For Each chi As Pin In listOfPins.ToArray()
+                            If chi.Parent.Equals(obj) Then
+                                listOfPins.Remove(chi)
+                            End If
+                        Next
+                        PictureBox1.Invalidate()
                         Return
                     End If
                 Next
                 For Each obj As BoardImage In listOfImages
                     If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
                         listOfImages.Remove(obj)
+                        For Each chi As Pin In listOfPins.ToArray()
+                            If chi.Parent.Equals(obj) Then
+                                listOfPins.Remove(chi)
+                            End If
+                        Next
+                        PictureBox1.Invalidate()
                         Return
                     End If
                 Next
@@ -666,6 +680,6 @@ Public Class Form1
     End Sub
 
     Private Sub DeleteModeToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DeleteModeToolStripMenuItem.Click
-        isDeletingSomthing = True
+        isDeletingSomthing = Not isDeletingSomthing
     End Sub
 End Class
