@@ -127,6 +127,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\main.bsf" />
     <None Include="Resources\zoomcursor_uncolored.cur" />
   </ItemGroup>
   <ItemGroup>

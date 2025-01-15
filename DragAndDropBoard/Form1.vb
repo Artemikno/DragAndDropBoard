@@ -1,6 +1,9 @@
-﻿Imports System.Drawing.Imaging
+﻿Imports System.CodeDom.Compiler
+Imports System.Drawing.Imaging
 Imports System.Drawing.Text
+Imports System.Globalization
 Imports System.IO
+Imports System.Net.WebRequestMethods
 Imports System.Runtime.CompilerServices
 Imports System.Text
 
@@ -29,6 +32,7 @@ Public Class Form1
     Private publicLastID As Integer = 0
     Private sawConnError As Boolean = True
     Private isDeletingSomthing = False
+    Private temp = False
 
     Class Object2D
         Property ID As Integer
@@ -206,8 +210,8 @@ Public Class Form1
     End Sub
 
     Private Sub LoadFile(fp As String)
-        Dim myStream As Stream
-        myStream = File.OpenRead(fp)
+        Dim myStream As FileStream
+        myStream = IO.File.OpenRead(fp)
         If myStream IsNot Nothing Then
             Dim reader As New StreamReader(myStream, Encoding.Unicode)
             Dim loadedData As String = reader.ReadToEnd()
@@ -283,6 +287,74 @@ Public Class Form1
                 End If
             Next
         End If
+    End Sub
+
+    Private Sub LoadFile(objectStrings As String())
+        listOfPins.Clear()
+        listOfConnections.Clear()
+        listOfImages.Clear()
+        listOfNotes.Clear()
+
+        ' Load BoardImages first
+        For Each objStr As String In objectStrings
+            If objStr.StartsWith("BoardImage#") Then
+                Dim data As String() = objStr.Substring(11).Split("#"c)
+                Dim tag As String = data(2)
+                Dim img As Bitmap
+                If IO.File.Exists(tag) Then
+                    img = New Bitmap(tag) With {
+                        .Tag = tag
+                    }
+                Else
+                    MessageBox.Show($"Image file not found: {tag}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Continue For
+                End If
+                Dim boardImage As New BoardImage(img, Integer.Parse(data(0)), Integer.Parse(data(1)), img.Tag, New Size(data(4), data(3))) With {
+                    .ID = Integer.Parse(data(5))
+                }
+                listOfImages.Add(boardImage)
+            End If
+        Next
+
+        ' Load Notes
+        For Each objStr As String In objectStrings
+            If objStr.StartsWith("Note#") Then
+                Dim data As String() = objStr.Substring(5).Split("#"c)
+                Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                        .ID = Integer.Parse(data(5))
+                    }
+                listOfNotes.Add(pin)
+            End If
+        Next
+
+        ' Load Pins
+        For Each objStr As String In objectStrings
+            If objStr.StartsWith("Pin#") Then
+                Dim data As String() = objStr.Substring(4).Split("#"c)
+                Dim parentID As Integer = Integer.Parse(data(2))
+                Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
+                Dim pin As New Pin(parent, Brushes.Red, Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                    .ID = Integer.Parse(data(3))
+                }
+                listOfPins.Add(pin)
+            End If
+        Next
+
+        ' Load Connections
+        For Each objStr As String In objectStrings
+            If objStr.StartsWith("Connection#") Then
+                Dim data As String() = objStr.Substring(11).Split("#"c)
+                Dim color As Pen = Pens.Red
+                Dim startPinID As Integer = Integer.Parse(data(1))
+                Dim destPinID As Integer = Integer.Parse(data(2))
+                Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
+                Dim destPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, destPinID)
+                Dim connection As New Connection(color, startPin, destPin) With {
+                    .ID = Integer.Parse(data(3))
+                }
+                listOfConnections.Add(connection)
+            End If
+        Next
     End Sub
 
     Function IterateThroughListOfObject2DToFindOneWithMatchingID(list As IEnumerable(Of Object2D), idToFind As Integer)
@@ -367,7 +439,7 @@ Public Class Form1
 
     Private Sub PictureBox1_Paint(sender As Object, e As PaintEventArgs) Handles PictureBox1.Paint
         If isTheImageThere Then
-            listOfImages.Add(New BoardImage(image, 0, 0, image.Tag, image.Size) With {.ID = publicLastID})
+            listOfImages.Add(New BoardImage(image, 0 + 100 + xOffset, 0 + 100 + yOffset, image.Tag, image.Size) With {.ID = publicLastID})
             publicLastID += 1
             image.Dispose()
             isTheImageThere = False
@@ -427,7 +499,7 @@ Public Class Form1
         Next
         For Each note As Note In listOfNotes
             g.FillRectangle(note.Color, CInt(note.X + xOffset + imageSize / 2), CInt(note.Y + yOffset + imageSize / 2), CInt(note.Sizedata.Width * imageSize), CInt(note.Sizedata.Height * imageSize))
-            g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X, note.Y)
+            g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X + xOffset, note.Y + yOffset)
         Next
         For Each conn As Connection In listOfConnections.ToArray()
             If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
@@ -456,18 +528,18 @@ Public Class Form1
         End If
         If isEditing Then
             For Each pin As Pin In listOfPins
-                If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                     startingPinTempValue = pin
                 End If
             Next
             If startingPinTempValue Is Nothing Then
                 For Each img As BoardImage In listOfImages
-                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         imageEdited = img
                     End If
                 Next
                 For Each note As Note In listOfNotes
-                    If Not Rectangle.Intersect(New Rectangle(note.X, note.Y, note.Sizedata.Width, note.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(note.X, note.Y, note.Sizedata.Width, note.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         imageEdited = note
                     End If
                 Next
@@ -514,14 +586,14 @@ Public Class Form1
         If isDeletingSomthing Then
             If Not didTheMouseMove Then
                 For Each obj As Pin In listOfPins
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         listOfPins.Remove(obj)
                         PictureBox1.Invalidate()
                         Return
                     End If
                 Next
                 For Each obj As Note In listOfNotes
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         listOfNotes.Remove(obj)
                         For Each chi As Pin In listOfPins.ToArray()
                             If chi.Parent.Equals(obj) Then
@@ -533,7 +605,7 @@ Public Class Form1
                     End If
                 Next
                 For Each obj As BoardImage In listOfImages
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         listOfImages.Remove(obj)
                         For Each chi As Pin In listOfPins.ToArray()
                             If chi.Parent.Equals(obj) Then
@@ -551,30 +623,30 @@ Public Class Form1
             Dim imgnumber As Integer = 0
             Dim imgimg As Object2D
             For Each img As BoardImage In listOfImages
-                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                     imgnumber += 1
                     imgimg = img
                 End If
             Next
             For Each img As Note In listOfNotes
-                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                     imgnumber += 1
                     imgimg = img
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, Brushes.Red, e.X, e.Y) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, Brushes.Red, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
-                    listOfNotes.Add(New Note(it, e.X, e.Y, New Size(128, 128)))
+                    listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128)))
                 End If
             End If
         Else
             If isEditing Then
                 For Each pin As Pin In listOfPins
-                    If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location, New Size(0, 0))).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                         Dim i = 0
                         For Each conn As Connection In listOfConnections
                             If conn.StartingLocation.Equals(startingPinTempValue) And conn.DestinationLocation.Equals(pin) Then
@@ -631,6 +703,19 @@ Public Class Form1
             buffer.Graphics.InterpolationMode = Drawing2D.InterpolationMode.NearestNeighbor
             buffer.Graphics.SmoothingMode = Drawing2D.SmoothingMode.HighSpeed
         End If
+
+        Dim encoded = String.Join("", My.Resources.main)
+        Dim decoded As New Text.StringBuilder()
+
+        ' Iterate over the encoded numbers (assume 3-digit ASCII codes)
+        For i As Integer = 0 To encoded.Length - 1 Step 3
+            Dim asciiCode As Integer = Integer.Parse(encoded.Substring(i, 3))
+            decoded.Append(Chr(asciiCode))
+        Next
+
+        LoadFile(decoded.ToString().Split("|"c))
+        InputBox(decoded.ToString(), decoded.ToString(), decoded.ToString())
+
         Dim args As String() = Environment.GetCommandLineArgs()
 
         If args.Length > 1 Then
