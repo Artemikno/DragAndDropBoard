@@ -32,7 +32,31 @@ Public Class Form1
     Private publicLastID As Integer = 0
     Private sawConnError As Boolean = True
     Private isDeletingSomthing = False
-    Private temp = False
+    'Private rand As New Random()
+    Private main = "Pin#825#159#8#14#Red|Pin#984#132#11#15#Red|Pin#433#366#0#19#Red|Pin#644#388#17#20#Red|Pin#526#513#18#22#Red|Pin#645#576#24#26#Red|Pin#550#666#28#29#Red|Pin#845#315#5#32#Red|Connection#Red#15#14#16|Connection#Red#20#19#21|Connection#Red#22#20#23|Connection#Red#22#26#27|Connection#Red#29#26#30|Connection#Red#14#22#31|Connection#Red#32#22#33|Note#368#305#Hi!#128#128#0#SkyBlue|Note#160#34#/\
+ l
+ l#128#128#3#SkyBlue|Note#197#85#Click here
+to delete#128#128#4#SkyBlue|Note#752#279#To add an
+image do
+what the
+title says#128#128#5#SkyBlue|Note#406#42#/\
+ l
+ l#128#128#6#SkyBlue|Note#437#84#When you put
+an image
+it will
+resize#128#128#7#SkyBlue|Note#741#71#To add a
+note click
+somwhere
+empty#128#128#8#SkyBlue|Note#889#45#To add a
+new line
+type /nｌ#128#128#11#SkyBlue|Note#572#291#To save press
+File and
+Save As...#128#128#17#SkyBlue|Note#425#478#To add a pin 
+click on a 
+note or image#128#128#18#SkyBlue|Note#619#475#To connect pins 
+drag from one 
+pin to another!#128#128#24#SkyBlue|Note#453#651#I will
+add more#128#128#28#SkyBlue|"
 
     Class Object2D
         Property ID As Integer
@@ -50,14 +74,14 @@ Public Class Form1
         Property Color As Pen
         Property StartingLocation As Pin
         Property DestinationLocation As Pin
-        Public Sub New(Color As Pen, StartingLocation As Pin, DestinationLocation As Pin)
-            Me.Color = Color
+        Public Sub New(Color As String, StartingLocation As Pin, DestinationLocation As Pin)
+            Me.Color = New Pen(Drawing.Color.FromName(Color))
             Me.StartingLocation = StartingLocation
             Me.DestinationLocation = DestinationLocation
         End Sub
 
         Public Overrides Function ToString() As String
-            Return String.Concat("Connection#", Color.Color.ToArgb(), "#", StartingLocation.ID, "#", DestinationLocation.ID, "#", ID)
+            Return String.Concat("Connection#", Color.Color.Name, "#", StartingLocation.ID, "#", DestinationLocation.ID, "#", ID)
         End Function
     End Class
 
@@ -65,15 +89,15 @@ Public Class Form1
         Inherits Object2D
         Property Color As Brush
         Property Parent As Object2D
-        Public Sub New(Parent As Object2D, Color As Brush, X As Integer, Y As Integer)
+        Public Sub New(Parent As Object2D, Color As String, X As Integer, Y As Integer)
             Me.Parent = Parent
-            Me.Color = Color
+            Me.Color = New Pen(Drawing.Color.FromName(Color)).Brush
             Me.X = X
             Me.Y = Y
         End Sub
 
         Public Overrides Function ToString() As String
-            Return String.Concat("Pin#", X, "#", Y, "#", Parent.ID, "#", ID)
+            Return String.Concat("Pin#", X, "#", Y, "#", Parent.ID, "#", ID, "#", New Pen(Color).Color.Name)
         End Function
     End Class
 
@@ -98,7 +122,7 @@ Public Class Form1
         Property Color As Brush
         Property Note As String
         Property Sizedata As Size
-        Public Sub New(Note As String, X As Integer, Y As Integer, SizeData As Size)
+        Public Sub New(Note As String, X As Integer, Y As Integer, SizeData As Size, color As String)
             If Note.Equals("") Then
                 Throw New InvalidOperationException("Invalid condition for creating this object.")
                 Return
@@ -107,21 +131,20 @@ Public Class Form1
             Me.X = X
             Me.Y = Y
             Me.Sizedata = SizeData
-            Me.Color = GetRandomSolidBrush()
+            Me.Color = New Pen(Drawing.Color.FromName(color)).Brush
         End Sub
 
         Public Overrides Function ToString() As String
-            Return String.Concat("Note#", X, "#", Y, "#", Note, "#", Sizedata.Height, "#", Sizedata.Width, "#", ID)
+            Return String.Concat("Note#", X, "#", Y, "#", Note, "#", Sizedata.Height, "#", Sizedata.Width, "#", ID, "#", New Pen(Color).Color.Name)
         End Function
 
-        Public Function GetRandomSolidBrush() As SolidBrush
-            Dim rand As New Random()
+        Public Function GetRandomSolidBrush(rand As Random) As SolidBrush
             Dim randomColor As Color = Drawing.Color.FromArgb(rand.Next(16) * 16, rand.Next(16) * 16, rand.Next(16) * 16)
             Return New SolidBrush(randomColor)
         End Function
     End Class
 
-    Private Sub LoadFile()
+    Public Sub LoadFile()
         Dim myStream As Stream
         Dim openFileDialog1 As New OpenFileDialog With {
         .Filter = "save files|*.bsf",
@@ -170,7 +193,7 @@ Public Class Form1
                 For Each objStr As String In objectStrings
                     If objStr.StartsWith("Note#") Then
                         Dim data As String() = objStr.Substring(5).Split("#"c)
-                        Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                        Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
                             .ID = Integer.Parse(data(5))
                         }
                         listOfNotes.Add(pin)
@@ -183,7 +206,7 @@ Public Class Form1
                         Dim data As String() = objStr.Substring(4).Split("#"c)
                         Dim parentID As Integer = Integer.Parse(data(2))
                         Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
-                        Dim pin As New Pin(parent, Brushes.Red, Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                        Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                             .ID = Integer.Parse(data(3))
                         }
                         listOfPins.Add(pin)
@@ -194,7 +217,7 @@ Public Class Form1
                 For Each objStr As String In objectStrings
                     If objStr.StartsWith("Connection#") Then
                         Dim data As String() = objStr.Substring(11).Split("#"c)
-                        Dim color As Pen = Pens.Red
+                        Dim color As String = data(0)
                         Dim startPinID As Integer = Integer.Parse(data(1))
                         Dim destPinID As Integer = Integer.Parse(data(2))
                         Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
@@ -209,7 +232,7 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub LoadFile(fp As String)
+    Public Sub LoadFile(fp As String)
         Dim myStream As FileStream
         myStream = IO.File.OpenRead(fp)
         If myStream IsNot Nothing Then
@@ -251,7 +274,7 @@ Public Class Form1
             For Each objStr As String In objectStrings
                 If objStr.StartsWith("Note#") Then
                     Dim data As String() = objStr.Substring(5).Split("#"c)
-                    Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                    Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
                             .ID = Integer.Parse(data(5))
                         }
                     listOfNotes.Add(pin)
@@ -264,7 +287,7 @@ Public Class Form1
                     Dim data As String() = objStr.Substring(4).Split("#"c)
                     Dim parentID As Integer = Integer.Parse(data(2))
                     Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
-                    Dim pin As New Pin(parent, Brushes.Red, Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                    Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                         .ID = Integer.Parse(data(3))
                     }
                     listOfPins.Add(pin)
@@ -275,7 +298,7 @@ Public Class Form1
             For Each objStr As String In objectStrings
                 If objStr.StartsWith("Connection#") Then
                     Dim data As String() = objStr.Substring(11).Split("#"c)
-                    Dim color As Pen = Pens.Red
+                    Dim color As String = data(0)
                     Dim startPinID As Integer = Integer.Parse(data(1))
                     Dim destPinID As Integer = Integer.Parse(data(2))
                     Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
@@ -289,7 +312,7 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub LoadFile(objectStrings As String())
+    Public Sub LoadFile(objectStrings As String())
         listOfPins.Clear()
         listOfConnections.Clear()
         listOfImages.Clear()
@@ -320,20 +343,24 @@ Public Class Form1
         For Each objStr As String In objectStrings
             If objStr.StartsWith("Note#") Then
                 Dim data As String() = objStr.Substring(5).Split("#"c)
-                Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3))) With {
+                Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
                         .ID = Integer.Parse(data(5))
                     }
                 listOfNotes.Add(pin)
             End If
         Next
 
+        Dim listOfConnectibleObjects = New List(Of Object2D)
+        listOfImages.ForEach(Sub(obj) listOfConnectibleObjects.Add(obj))
+        listOfNotes.ForEach(Sub(obj) listOfConnectibleObjects.Add(obj))
+
         ' Load Pins
         For Each objStr As String In objectStrings
             If objStr.StartsWith("Pin#") Then
                 Dim data As String() = objStr.Substring(4).Split("#"c)
                 Dim parentID As Integer = Integer.Parse(data(2))
-                Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
-                Dim pin As New Pin(parent, Brushes.Red, Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                Dim parent As Object2D = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfConnectibleObjects, parentID)
+                Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                     .ID = Integer.Parse(data(3))
                 }
                 listOfPins.Add(pin)
@@ -344,7 +371,7 @@ Public Class Form1
         For Each objStr As String In objectStrings
             If objStr.StartsWith("Connection#") Then
                 Dim data As String() = objStr.Substring(11).Split("#"c)
-                Dim color As Pen = Pens.Red
+                Dim color As String = data(0)
                 Dim startPinID As Integer = Integer.Parse(data(1))
                 Dim destPinID As Integer = Integer.Parse(data(2))
                 Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
@@ -635,12 +662,17 @@ Public Class Form1
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, Brushes.Red, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, ToolStripTextBox1.Text, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
-                    listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128)))
+                    If ToolStripComboBox1.Text = "Unlimited" Then
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), ToolStripTextBox1.Text) With {.ID = publicLastID})
+                    Else
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), ToolStripTextBox1.Text) With {.ID = publicLastID})
+                    End If
+                    publicLastID += 1
                 End If
             End If
         Else
@@ -655,7 +687,7 @@ Public Class Form1
                             End If
                         Next
                         If i = 0 Then
-                            listOfConnections.Add(New Connection(Pens.Red, startingPinTempValue, pin) With {.ID = publicLastID})
+                            listOfConnections.Add(New Connection(ToolStripTextBox1.Text, startingPinTempValue, pin) With {.ID = publicLastID})
                             publicLastID += 1
                         End If
                     End If
@@ -704,17 +736,8 @@ Public Class Form1
             buffer.Graphics.SmoothingMode = Drawing2D.SmoothingMode.HighSpeed
         End If
 
-        Dim encoded = String.Join("", My.Resources.main)
-        Dim decoded As New Text.StringBuilder()
-
-        ' Iterate over the encoded numbers (assume 3-digit ASCII codes)
-        For i As Integer = 0 To encoded.Length - 1 Step 3
-            Dim asciiCode As Integer = Integer.Parse(encoded.Substring(i, 3))
-            decoded.Append(Chr(asciiCode))
-        Next
-
-        LoadFile(decoded.ToString().Split("|"c))
-        InputBox(decoded.ToString(), decoded.ToString(), decoded.ToString())
+        MsgBox(New String(main).Replace("|", Environment.NewLine))
+        LoadFile(main.Split("|"c))
 
         Dim args As String() = Environment.GetCommandLineArgs()
 
