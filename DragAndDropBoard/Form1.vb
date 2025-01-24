@@ -736,9 +736,6 @@ add more#128#128#28#SkyBlue|"
             buffer.Graphics.SmoothingMode = Drawing2D.SmoothingMode.HighSpeed
         End If
 
-        MsgBox(New String(main).Replace("|", Environment.NewLine))
-        LoadFile(main.Split("|"c))
-
         Dim args As String() = Environment.GetCommandLineArgs()
 
         If args.Length > 1 Then
@@ -755,6 +752,8 @@ add more#128#128#28#SkyBlue|"
                 Catch ex1 As Exception
                 End Try
             End Try
+        Else
+            LoadFile(main.Split("|"c))
         End If
     End Sub
 
