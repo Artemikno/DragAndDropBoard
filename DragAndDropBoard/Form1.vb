@@ -533,9 +533,10 @@ add more#128#128#28#SkyBlue|"
                 'g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
                 g.DrawCurve(conn.Color, {
                     New PointF(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset),
-                    New PointF((conn.StartingLocation.X + 10 + xOffset + conn.DestinationLocation.X + 10 + xOffset) / 2, Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.Y + 10 + yOffset) + 50),
-                    New PointF(conn.DestinationLocation.X, conn.DestinationLocation.Y)
+                    New PointF(((conn.StartingLocation.X + conn.DestinationLocation.X) / 2) + 10 + xOffset,Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.Y + 10 + yOffset) + 50),
+                    New PointF(conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
                 }, 0, 2, 0.5F)
+
             Else
                 If Not sawConnError Then
                     MessageBox.Show(String.Concat("Connection drawing error!", Environment.NewLine, "Removing all connections with errors!"), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
