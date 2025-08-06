@@ -530,7 +530,12 @@ add more#128#128#28#SkyBlue|"
         Next
         For Each conn As Connection In listOfConnections.ToArray()
             If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
-                g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
+                'g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
+                g.DrawCurve(conn.Color, {
+                    New PointF(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset),
+                    New PointF((conn.StartingLocation.X + 10 + xOffset + conn.DestinationLocation.X + 10 + xOffset) / 2, Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation + 10 + yOffset) + 50),
+                    New PointF(conn.DestinationLocation.X, conn.DestinationLocation.Y)
+                }, 0, 2, 0.5F)
             Else
                 If Not sawConnError Then
                     MessageBox.Show(String.Concat("Connection drawing error!", Environment.NewLine, "Removing all connections with errors!"), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
