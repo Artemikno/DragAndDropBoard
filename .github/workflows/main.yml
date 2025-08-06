@@ -1,0 +1,21 @@
+name: Build VB.NET Solution
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build project
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    - name: Build Solution
+      run: msbuild DaDB.sln /p:Configuration=Release
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: DaDB-executable
+        path: DragAndDropBoard\bin\Release\*.exe
