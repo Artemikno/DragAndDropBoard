@@ -533,7 +533,7 @@ add more#128#128#28#SkyBlue|"
                 'g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
                 g.DrawCurve(conn.Color, {
                     New PointF(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset),
-                    New PointF((conn.StartingLocation.X + 10 + xOffset + conn.DestinationLocation.X + 10 + xOffset) / 2, Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation + 10 + yOffset) + 50),
+                    New PointF((conn.StartingLocation.X + 10 + xOffset + conn.DestinationLocation.X + 10 + xOffset) / 2, Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.Y + 10 + yOffset) + 50),
                     New PointF(conn.DestinationLocation.X, conn.DestinationLocation.Y)
                 }, 0, 2, 0.5F)
             Else
