@@ -531,12 +531,7 @@ add more#128#128#28#SkyBlue|"
         For Each conn As Connection In listOfConnections.ToArray()
             If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
                 'g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
-                g.DrawCurve(conn.Color, {
-                    New PointF(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset),
-                    New PointF(((conn.StartingLocation.X + conn.DestinationLocation.X) / 2) + 10 + xOffset,Math.Max(conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.Y + 10 + yOffset) + 50),
-                    New PointF(conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
-                }, 0, 2, 0.5F)
-
+                g.DrawBezier(conn.Color, New Point(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset), New Point((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10 + xOffset, Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30 + yOffset), New Point((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10 + xOffset, Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30 + yOffset), New Point(conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset))
             Else
                 If Not sawConnError Then
                     MessageBox.Show(String.Concat("Connection drawing error!", Environment.NewLine, "Removing all connections with errors!"), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -719,12 +714,12 @@ add more#128#128#28#SkyBlue|"
     End Sub
 
     Private Sub InToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles InToolStripMenuItem.Click
-        CenteredZoom(1.1)
+        'CenteredZoom(1.1)
         PictureBox1.Invalidate()
     End Sub
 
     Private Sub OutToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OutToolStripMenuItem.Click
-        CenteredZoom(-1.1)
+        'CenteredZoom(-1.1)
         PictureBox1.Invalidate()
     End Sub
 
@@ -775,7 +770,7 @@ add more#128#128#28#SkyBlue|"
     End Sub
 
     Private Sub ResetToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles ResetToolStripMenuItem1.Click
-        imageSize = 1
+        'imageSize = 1
         PictureBox1.Invalidate()
     End Sub
 
