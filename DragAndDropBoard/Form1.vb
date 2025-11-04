@@ -663,15 +663,15 @@ add more#128#128#28#SkyBlue|"
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, ToolStripTextBox1.Text, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, "Red", e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
                     If ToolStripComboBox1.Text = "Unlimited" Then
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), ToolStripTextBox1.Text) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), "Khaki") With {.ID = publicLastID})
                     Else
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), ToolStripTextBox1.Text) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), "Khaki") With {.ID = publicLastID})
                     End If
                     publicLastID += 1
                 End If
@@ -688,7 +688,7 @@ add more#128#128#28#SkyBlue|"
                             End If
                         Next
                         If i = 0 Then
-                            listOfConnections.Add(New Connection(ToolStripTextBox1.Text, startingPinTempValue, pin) With {.ID = publicLastID})
+                            listOfConnections.Add(New Connection("Red", startingPinTempValue, pin) With {.ID = publicLastID})
                             publicLastID += 1
                         End If
                     End If
