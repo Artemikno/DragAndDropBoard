@@ -649,7 +649,7 @@ add more#128#128#28#SkyBlue|"
         End If
         If Not didTheMouseMove And isEditing Then
             Dim imgnumber As Integer = 0
-            Dim imgimg As Object2D
+            Dim imgimg As Object2D = Nothing
             For Each img As BoardImage In listOfImages
                 If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
                     imgnumber += 1
@@ -663,15 +663,15 @@ add more#128#128#28#SkyBlue|"
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, "Red", e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, My.Settings.ColorPins.ToKnownColor(), e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
                     If ToolStripComboBox1.Text = "Unlimited" Then
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), "Khaki") With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), My.Settings.ColorNotes.ToKnownColor()) With {.ID = publicLastID})
                     Else
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), "Khaki") With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), My.Settings.ColorNotes.ToKnownColor()) With {.ID = publicLastID})
                     End If
                     publicLastID += 1
                 End If
@@ -688,7 +688,7 @@ add more#128#128#28#SkyBlue|"
                             End If
                         Next
                         If i = 0 Then
-                            listOfConnections.Add(New Connection("Red", startingPinTempValue, pin) With {.ID = publicLastID})
+                            listOfConnections.Add(New Connection(My.Settings.ColorConn.ToKnownColor(), startingPinTempValue, pin) With {.ID = publicLastID})
                             publicLastID += 1
                         End If
                     End If
@@ -789,5 +789,9 @@ add more#128#128#28#SkyBlue|"
 
     Private Sub DeleteModeToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DeleteModeToolStripMenuItem.Click
         isDeletingSomthing = Not isDeletingSomthing
+    End Sub
+
+    Private Sub ToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles ToolStripMenuItem1.Click
+        Dialog1.ShowDialog(Me)
     End Sub
 End Class

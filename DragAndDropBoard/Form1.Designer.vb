@@ -35,12 +35,13 @@ Partial Class Form1
         Me.DeleteModeToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToggleModesMoveEditToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripComboBox1 = New System.Windows.Forms.ToolStripComboBox()
+        Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
         'MenuStrip1
         '
-        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.ZoomToolStripMenuItem, Me.OffsetToolStripMenuItem, Me.DeleteModeToolStripMenuItem, Me.ToggleModesMoveEditToolStripMenuItem, Me.ToolStripComboBox1})
+        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.ZoomToolStripMenuItem, Me.OffsetToolStripMenuItem, Me.DeleteModeToolStripMenuItem, Me.ToggleModesMoveEditToolStripMenuItem, Me.ToolStripComboBox1, Me.ToolStripMenuItem1})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Size = New System.Drawing.Size(800, 27)
@@ -123,6 +124,12 @@ Partial Class Form1
         Me.ToolStripComboBox1.Name = "ToolStripComboBox1"
         Me.ToolStripComboBox1.Size = New System.Drawing.Size(121, 23)
         '
+        'ToolStripMenuItem1
+        '
+        Me.ToolStripMenuItem1.Name = "ToolStripMenuItem1"
+        Me.ToolStripMenuItem1.Size = New System.Drawing.Size(85, 23)
+        Me.ToolStripMenuItem1.Text = "Select colors"
+        '
         'Form1
         '
         Me.AllowDrop = True
@@ -152,4 +159,5 @@ Partial Class Form1
     Friend WithEvents OpenToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SaveAsToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents DeleteModeToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents ToolStripMenuItem1 As ToolStripMenuItem
 End Class

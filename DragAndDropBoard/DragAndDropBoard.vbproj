@@ -73,6 +73,18 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ColorPicker.Designer.vb">
+      <DependentUpon>ColorPicker.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ColorPicker.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialog1.Designer.vb">
+      <DependentUpon>Dialog1.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Dialog1.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="DoublePanel.vb">
       <SubType>Component</SubType>
     </Compile>
@@ -101,6 +113,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ColorPicker.resx">
+      <DependentUpon>ColorPicker.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialog1.resx">
+      <DependentUpon>Dialog1.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DoublePanel.resx">
       <DependentUpon>DoublePanel.vb</DependentUpon>
     </EmbeddedResource>
