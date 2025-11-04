@@ -55,8 +55,29 @@ Save As...#128#128#17#SkyBlue|Note#425#478#To add a pin
 click on a 
 note or image#128#128#18#SkyBlue|Note#619#475#To connect pins 
 drag from one 
-pin to another!#128#128#24#SkyBlue|Note#453#651#I will
-add more#128#128#28#SkyBlue|"
+pin to another!#128#128#24#SkyBlue|Note#453#651#To use
+different colors
+press the select
+colors button#128#128#28#SkyBlue|"
+
+    Public Shared Function ClosestNamedColor(c As Color) As String
+        Dim minDiff As Long = Long.MaxValue
+        Dim closest As String = c.Name
+        For Each prop In GetType(Color).GetProperties()
+            If prop.PropertyType Is GetType(Color) Then
+                Dim named = CType(prop.GetValue(Nothing), Color)
+                Dim dr As Long = CLng(c.R) - CLng(named.R)
+                Dim dg As Long = CLng(c.G) - CLng(named.G)
+                Dim db As Long = CLng(c.B) - CLng(named.B)
+                Dim diff As Long = dr * dr + dg * dg + db * db
+                If diff < minDiff Then
+                    minDiff = diff
+                    closest = named.Name
+                End If
+            End If
+        Next
+        Return closest
+    End Function
 
     Class Object2D
         Property ID As Integer
@@ -74,8 +95,8 @@ add more#128#128#28#SkyBlue|"
         Property Color As Pen
         Property StartingLocation As Pin
         Property DestinationLocation As Pin
-        Public Sub New(Color As String, StartingLocation As Pin, DestinationLocation As Pin)
-            Me.Color = New Pen(Drawing.Color.FromName(Color))
+        Public Sub New(Color As Color, StartingLocation As Pin, DestinationLocation As Pin)
+            Me.Color = New Pen(Color)
             Me.StartingLocation = StartingLocation
             Me.DestinationLocation = DestinationLocation
         End Sub
@@ -89,15 +110,15 @@ add more#128#128#28#SkyBlue|"
         Inherits Object2D
         Property Color As Brush
         Property Parent As Object2D
-        Public Sub New(Parent As Object2D, Color As String, X As Integer, Y As Integer)
+        Public Sub New(Parent As Object2D, Color As Color, X As Integer, Y As Integer)
             Me.Parent = Parent
-            Me.Color = New Pen(Drawing.Color.FromName(Color)).Brush
+            Me.Color = New Pen(Color).Brush
             Me.X = X
             Me.Y = Y
         End Sub
 
         Public Overrides Function ToString() As String
-            Return String.Concat("Pin#", X, "#", Y, "#", Parent.ID, "#", ID, "#", New Pen(Color).Color.Name)
+            Return String.Concat("Pin#", X, "#", Y, "#", Parent.ID, "#", ID, "#", ClosestNamedColor(New Pen(Color).Color))
         End Function
     End Class
 
@@ -122,7 +143,7 @@ add more#128#128#28#SkyBlue|"
         Property Color As Brush
         Property Note As String
         Property Sizedata As Size
-        Public Sub New(Note As String, X As Integer, Y As Integer, SizeData As Size, color As String)
+        Public Sub New(Note As String, X As Integer, Y As Integer, SizeData As Size, color As Color)
             If Note.Equals("") Then
                 Throw New InvalidOperationException("Invalid condition for creating this object.")
                 Return
@@ -131,11 +152,11 @@ add more#128#128#28#SkyBlue|"
             Me.X = X
             Me.Y = Y
             Me.Sizedata = SizeData
-            Me.Color = New Pen(Drawing.Color.FromName(color)).Brush
+            Me.Color = New Pen(color).Brush
         End Sub
 
         Public Overrides Function ToString() As String
-            Return String.Concat("Note#", X, "#", Y, "#", Note, "#", Sizedata.Height, "#", Sizedata.Width, "#", ID, "#", New Pen(Color).Color.Name)
+            Return String.Concat("Note#", X, "#", Y, "#", Note, "#", Sizedata.Height, "#", Sizedata.Width, "#", ID, "#", ClosestNamedColor(New Pen(Color).Color))
         End Function
 
         Public Function GetRandomSolidBrush(rand As Random) As SolidBrush
@@ -193,7 +214,7 @@ add more#128#128#28#SkyBlue|"
                 For Each objStr As String In objectStrings
                     If objStr.StartsWith("Note#") Then
                         Dim data As String() = objStr.Substring(5).Split("#"c)
-                        Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
+                        Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), Color.FromName(data(6))) With {
                             .ID = Integer.Parse(data(5))
                         }
                         listOfNotes.Add(pin)
@@ -206,7 +227,7 @@ add more#128#128#28#SkyBlue|"
                         Dim data As String() = objStr.Substring(4).Split("#"c)
                         Dim parentID As Integer = Integer.Parse(data(2))
                         Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
-                        Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                        Dim pin As New Pin(parent, Color.FromName(data(4)), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                             .ID = Integer.Parse(data(3))
                         }
                         listOfPins.Add(pin)
@@ -222,7 +243,7 @@ add more#128#128#28#SkyBlue|"
                         Dim destPinID As Integer = Integer.Parse(data(2))
                         Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
                         Dim destPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, destPinID)
-                        Dim connection As New Connection(color, startPin, destPin) With {
+                        Dim connection As New Connection(Drawing.Color.FromName(color), startPin, destPin) With {
                             .ID = Integer.Parse(data(3))
                         }
                         listOfConnections.Add(connection)
@@ -274,7 +295,7 @@ add more#128#128#28#SkyBlue|"
             For Each objStr As String In objectStrings
                 If objStr.StartsWith("Note#") Then
                     Dim data As String() = objStr.Substring(5).Split("#"c)
-                    Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
+                    Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), Color.FromName(data(6))) With {
                             .ID = Integer.Parse(data(5))
                         }
                     listOfNotes.Add(pin)
@@ -287,7 +308,7 @@ add more#128#128#28#SkyBlue|"
                     Dim data As String() = objStr.Substring(4).Split("#"c)
                     Dim parentID As Integer = Integer.Parse(data(2))
                     Dim parent As BoardImage = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfImages, parentID)
-                    Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                    Dim pin As New Pin(parent, Color.FromName(data(4)), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                         .ID = Integer.Parse(data(3))
                     }
                     listOfPins.Add(pin)
@@ -303,7 +324,7 @@ add more#128#128#28#SkyBlue|"
                     Dim destPinID As Integer = Integer.Parse(data(2))
                     Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
                     Dim destPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, destPinID)
-                    Dim connection As New Connection(color, startPin, destPin) With {
+                    Dim connection As New Connection(Drawing.Color.FromName(color), startPin, destPin) With {
                         .ID = Integer.Parse(data(3))
                     }
                     listOfConnections.Add(connection)
@@ -343,7 +364,7 @@ add more#128#128#28#SkyBlue|"
         For Each objStr As String In objectStrings
             If objStr.StartsWith("Note#") Then
                 Dim data As String() = objStr.Substring(5).Split("#"c)
-                Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), data(6)) With {
+                Dim pin As New Note(data(2), Integer.Parse(data(0)), Integer.Parse(data(1)), New Size(data(4), data(3)), Color.FromName(data(6))) With {
                         .ID = Integer.Parse(data(5))
                     }
                 listOfNotes.Add(pin)
@@ -360,7 +381,7 @@ add more#128#128#28#SkyBlue|"
                 Dim data As String() = objStr.Substring(4).Split("#"c)
                 Dim parentID As Integer = Integer.Parse(data(2))
                 Dim parent As Object2D = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfConnectibleObjects, parentID)
-                Dim pin As New Pin(parent, data(4), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
+                Dim pin As New Pin(parent, Color.FromName(data(4)), Integer.Parse(data(0)), Integer.Parse(data(1))) With {
                     .ID = Integer.Parse(data(3))
                 }
                 listOfPins.Add(pin)
@@ -376,7 +397,7 @@ add more#128#128#28#SkyBlue|"
                 Dim destPinID As Integer = Integer.Parse(data(2))
                 Dim startPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, startPinID)
                 Dim destPin As Pin = IterateThroughListOfObject2DToFindOneWithMatchingID(listOfPins, destPinID)
-                Dim connection As New Connection(color, startPin, destPin) With {
+                Dim connection As New Connection(Drawing.Color.FromName(color), startPin, destPin) With {
                     .ID = Integer.Parse(data(3))
                 }
                 listOfConnections.Add(connection)
@@ -390,7 +411,7 @@ add more#128#128#28#SkyBlue|"
                 Return obj
             End If
         Next
-        Throw New KeyNotFoundException($"Object2D was not found (by ID) with ID {idToFind} in a list of Object2D")
+        Return list.FirstOrDefault()
     End Function
 
     Private Sub CenteredZoom(zoomFactor As Double)
@@ -663,15 +684,15 @@ add more#128#128#28#SkyBlue|"
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, My.Settings.ColorPins.ToKnownColor(), e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, My.Settings.ColorPins, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
                     If ToolStripComboBox1.Text = "Unlimited" Then
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), My.Settings.ColorNotes.ToKnownColor()) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), My.Settings.ColorNotes) With {.ID = publicLastID})
                     Else
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), My.Settings.ColorNotes.ToKnownColor()) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), My.Settings.ColorNotes) With {.ID = publicLastID})
                     End If
                     publicLastID += 1
                 End If
@@ -688,7 +709,7 @@ add more#128#128#28#SkyBlue|"
                             End If
                         Next
                         If i = 0 Then
-                            listOfConnections.Add(New Connection(My.Settings.ColorConn.ToKnownColor(), startingPinTempValue, pin) With {.ID = publicLastID})
+                            listOfConnections.Add(New Connection(My.Settings.ColorConn, startingPinTempValue, pin) With {.ID = publicLastID})
                             publicLastID += 1
                         End If
                     End If
