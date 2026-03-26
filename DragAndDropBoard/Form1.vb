@@ -32,6 +32,7 @@ Public Class Form1
     Private publicLastID As Integer = 0
     Private sawConnError As Boolean = True
     Private isDeletingSomthing = False
+    Private zoom = 1.0F
     'Private rand As New Random()
     Private main = "Pin#825#159#8#14#Red|Pin#984#132#11#15#Red|Pin#433#366#0#19#Red|Pin#644#388#17#20#Red|Pin#526#513#18#22#Red|Pin#645#576#24#26#Red|Pin#550#666#28#29#Red|Pin#845#315#5#32#Red|Connection#Red#15#14#16|Connection#Red#20#19#21|Connection#Red#22#20#23|Connection#Red#22#26#27|Connection#Red#29#26#30|Connection#Red#14#22#31|Connection#Red#32#22#33|Note#368#305#Hi!#128#128#0#SkyBlue|Note#160#34#/\
  l
@@ -415,11 +416,14 @@ colors button#128#128#28#SkyBlue|"
     End Function
 
     Private Sub CenteredZoom(zoomFactor As Double)
+        Dim oldSize = zoom
         If Math.Sign(zoomFactor) = -1 Then
-            imageSize /= Math.Abs(zoomFactor)
+            zoom /= Math.Abs(zoomFactor)
         Else
-            imageSize *= zoomFactor
+            zoom *= zoomFactor
         End If
+        xOffset += CInt(((PictureBox1.Width \ 2) - xOffset) * (1 - zoom / oldSize))
+        yOffset += CInt(((PictureBox1.Height \ 2) - yOffset) * (1 - zoom / oldSize))
         PictureBox1.Invalidate()
     End Sub
 
@@ -500,7 +504,7 @@ colors button#128#128#28#SkyBlue|"
         'else
         'buffer.Graphics.DrawString(String.Concat("The image", vbNewLine, "will be here"), New Font("Comic Sans MS", CSng(16 * imageSize), FontStyle.Bold), Brushes.Black, CInt(PictureBox1.Width / 2 - 132.5208 * imageSize / 2 + xOffset), CInt(PictureBox1.Height / 2 - 62.125 * imageSize / 2 + yOffset))
         'End If
-        buffer.Graphics.DrawString(String.Concat(String.Concat("X: ", xOffset), String.Concat(" Y: ", yOffset), String.Concat(" Zoom: ", imageSize)), New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Black, 0, (PictureBox1.Size.Height - 32.39583))
+        buffer.Graphics.DrawString(String.Concat(String.Concat("X: ", xOffset), String.Concat(" Y: ", yOffset), String.Concat(" Zoom: ", zoom)), New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Black, 0, (PictureBox1.Size.Height - 32.39583))
         buffer.Render(e.Graphics)
     End Sub
 
@@ -543,16 +547,18 @@ colors button#128#128#28#SkyBlue|"
 
     Private Sub DrawAdvancedGraphics(g As Graphics)
         For Each img As BoardImage In listOfImages
-            g.DrawImage(img.Image, CInt(img.X + xOffset + imageSize / 2), CInt(img.Y + yOffset + imageSize / 2), CInt(img.Sizedata.Width * imageSize), CInt(img.Sizedata.Height * imageSize))
+            g.DrawImage(img.Image, CInt((img.X + imageSize / 2) * zoom + xOffset), CInt((img.Y + imageSize / 2) * zoom + yOffset), CInt(img.Sizedata.Width * imageSize * zoom), CInt(img.Sizedata.Height * imageSize * zoom))
         Next
         For Each note As Note In listOfNotes
-            g.FillRectangle(note.Color, CInt(note.X + xOffset + imageSize / 2), CInt(note.Y + yOffset + imageSize / 2), CInt(note.Sizedata.Width * imageSize), CInt(note.Sizedata.Height * imageSize))
-            g.DrawString(note.Note, New Font("Comic Sans MS", 16, FontStyle.Regular), GetOppositeSolidBrush(note.Color), note.X + xOffset, note.Y + yOffset)
+            g.FillRectangle(note.Color, CInt((note.X + imageSize / 2) * zoom + xOffset), CInt((note.Y + imageSize / 2) * zoom + yOffset), CInt(note.Sizedata.Width * imageSize * zoom), CInt(note.Sizedata.Height * imageSize * zoom))
+            If CInt(16 * zoom) > 0 Then
+                g.DrawString(note.Note, New Font("Comic Sans MS", CInt(16 * zoom), FontStyle.Regular), GetOppositeSolidBrush(note.Color), (note.X) * zoom + xOffset, (note.Y) * zoom + yOffset)
+            End If
         Next
         For Each conn As Connection In listOfConnections.ToArray()
             If conn.StartingLocation IsNot Nothing And conn.DestinationLocation IsNot Nothing And listOfPins.Exists(Function(val As Pin) val.Equals(conn.StartingLocation)) And listOfPins.Exists(Function(val As Pin) val.Equals(conn.DestinationLocation)) Then
                 'g.DrawLine(conn.Color, conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset, conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset)
-                g.DrawBezier(conn.Color, New Point(conn.StartingLocation.X + 10 + xOffset, conn.StartingLocation.Y + 10 + yOffset), New Point((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10 + xOffset, Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30 + yOffset), New Point((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10 + xOffset, Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30 + yOffset), New Point(conn.DestinationLocation.X + 10 + xOffset, conn.DestinationLocation.Y + 10 + yOffset))
+                g.DrawBezier(conn.Color, New Point((conn.StartingLocation.X + 10) * zoom + xOffset, (conn.StartingLocation.Y + 10) * zoom + yOffset), New Point(((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10) * zoom + xOffset, (Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30) * zoom + yOffset), New Point(((conn.StartingLocation.X + conn.DestinationLocation.X) \ 2 + 10) * zoom + xOffset, (Math.Max(conn.StartingLocation.Y, conn.DestinationLocation.Y) + 30) * zoom + yOffset), New Point((conn.DestinationLocation.X + 10) * zoom + xOffset, (conn.DestinationLocation.Y + 10) * zoom + yOffset))
             Else
                 If Not sawConnError Then
                     MessageBox.Show(String.Concat("Connection drawing error!", Environment.NewLine, "Removing all connections with errors!"), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -563,7 +569,7 @@ colors button#128#128#28#SkyBlue|"
         Next
 
         For Each pin As Pin In listOfPins
-            g.FillEllipse(pin.Color, pin.X + xOffset, pin.Y + yOffset, CInt(20 * imageSize), CInt(20 * imageSize))
+            g.FillEllipse(pin.Color, CInt((pin.X) * zoom + xOffset), CInt((pin.Y) * zoom + yOffset), CInt(20 * imageSize * zoom), CInt(20 * imageSize * zoom))
         Next
     End Sub
 
@@ -668,6 +674,14 @@ colors button#128#128#28#SkyBlue|"
             End If
             Return
         End If
+        If Not didTheMouseMove And Not isEditing Then
+            If e.Button = MouseButtons.Left Then
+                CenteredZoom(1.1)
+            End If
+            If e.Button = MouseButtons.Right Then
+                CenteredZoom(-1.1)
+            End If
+        End If
         If Not didTheMouseMove And isEditing Then
             Dim imgnumber As Integer = 0
             Dim imgimg As Object2D = Nothing
@@ -735,12 +749,12 @@ colors button#128#128#28#SkyBlue|"
     End Sub
 
     Private Sub InToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles InToolStripMenuItem.Click
-        'CenteredZoom(1.1)
+        CenteredZoom(1.1)
         PictureBox1.Invalidate()
     End Sub
 
     Private Sub OutToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OutToolStripMenuItem.Click
-        'CenteredZoom(-1.1)
+        CenteredZoom(-1.1)
         PictureBox1.Invalidate()
     End Sub
 

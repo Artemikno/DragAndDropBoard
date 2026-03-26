@@ -19,4 +19,8 @@ Public Class ColorPicker
             ListBox1.Items.Add(color)
         Next
     End Sub
+
+    Private Sub ListBox1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ListBox1.SelectedIndexChanged
+        Panel1.BackColor = Color.FromName(ListBox1.Items.Item(ListBox1.SelectedIndex))
+    End Sub
 End Class
