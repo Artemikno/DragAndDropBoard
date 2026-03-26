@@ -1,10 +1,4 @@
-﻿Imports System.CodeDom.Compiler
-Imports System.Drawing.Imaging
-Imports System.Drawing.Text
-Imports System.Globalization
-Imports System.IO
-Imports System.Net.WebRequestMethods
-Imports System.Runtime.CompilerServices
+﻿Imports System.IO
 Imports System.Text
 
 Public Class Form1
@@ -524,7 +518,7 @@ colors button#128#128#28#SkyBlue|"
                 Catch
                     bgTempGraphics.DrawString("Error!", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 512, i2 * 512)
                 End Try
-                bgTempGraphics.DrawString("", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 512, i2 * 512)
+                'bgTempGraphics.DrawString("", New Font("Comic Sans MS", 16, FontStyle.Regular), Drawing.Brushes.Red, i * 512, i2 * 512)
             Next
         Next
         bg = bgTemp.Clone()
@@ -535,9 +529,9 @@ colors button#128#128#28#SkyBlue|"
     Private Sub PrebuildBoard()
         Dim boardTemp As Bitmap = boardImg
         Dim g As Graphics = Graphics.FromImage(boardTemp)
-        For x As Integer = 0 To 16
-            For y As Integer = 0 To 16
-                g.DrawImage(My.Resources.board, x * 32, y * 32, 32, 32)
+        For x As Integer = 0 To 8
+            For y As Integer = 0 To 8
+                g.DrawImage(My.Resources.board, x * 64, y * 64, 64, 64)
             Next
         Next
         boardImg = boardTemp.Clone()
@@ -583,18 +577,18 @@ colors button#128#128#28#SkyBlue|"
         End If
         If isEditing Then
             For Each pin As Pin In listOfPins
-                If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                     startingPinTempValue = pin
                 End If
             Next
             If startingPinTempValue Is Nothing Then
                 For Each img As BoardImage In listOfImages
-                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         imageEdited = img
                     End If
                 Next
                 For Each note As Note In listOfNotes
-                    If Not Rectangle.Intersect(New Rectangle(note.X, note.Y, note.Sizedata.Width, note.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(note.X, note.Y, note.Sizedata.Width, note.Sizedata.Height), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         imageEdited = note
                     End If
                 Next
@@ -641,14 +635,14 @@ colors button#128#128#28#SkyBlue|"
         If isDeletingSomthing Then
             If Not didTheMouseMove Then
                 For Each obj As Pin In listOfPins
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X * zoom, obj.Y * zoom, 20 * zoom, 20 * zoom), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         listOfPins.Remove(obj)
                         PictureBox1.Invalidate()
                         Return
                     End If
                 Next
                 For Each obj As Note In listOfNotes
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         listOfNotes.Remove(obj)
                         For Each chi As Pin In listOfPins.ToArray()
                             If chi.Parent.Equals(obj) Then
@@ -660,7 +654,7 @@ colors button#128#128#28#SkyBlue|"
                     End If
                 Next
                 For Each obj As BoardImage In listOfImages
-                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(obj.X, obj.Y, obj.Sizedata.Width, obj.Sizedata.Height), New Rectangle(((e.Location.X - xOffset) / zoom) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         listOfImages.Remove(obj)
                         For Each chi As Pin In listOfPins.ToArray()
                             If chi.Parent.Equals(obj) Then
@@ -686,27 +680,27 @@ colors button#128#128#28#SkyBlue|"
             Dim imgnumber As Integer = 0
             Dim imgimg As Object2D = Nothing
             For Each img As BoardImage In listOfImages
-                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                     imgnumber += 1
                     imgimg = img
                 End If
             Next
             For Each img As Note In listOfNotes
-                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                If Not Rectangle.Intersect(New Rectangle(img.X, img.Y, img.Sizedata.Width, img.Sizedata.Height), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                     imgnumber += 1
                     imgimg = img
                 End If
             Next
             If imgnumber = 1 Then
-                listOfPins.Add(New Pin(imgimg, My.Settings.ColorPins, e.X + xOffset, e.Y + yOffset) With {.ID = publicLastID})
+                listOfPins.Add(New Pin(imgimg, My.Settings.ColorPins, e.X / zoom + xOffset, e.Y / zoom + yOffset) With {.ID = publicLastID})
                 publicLastID += 1
             ElseIf imgnumber = 0 Then
                 Dim it = InputBox("Enter the note text:", "DragAndDropBoard").Replace("/nl", Environment.NewLine)
                 If Not it.Equals("") Then
                     If ToolStripComboBox1.Text = "Unlimited" Then
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(128, 128), My.Settings.ColorNotes) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X / zoom + xOffset, e.Y / zoom + yOffset, New Size(128, 128), My.Settings.ColorNotes) With {.ID = publicLastID})
                     Else
-                        listOfNotes.Add(New Note(it, e.X + xOffset, e.Y + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), My.Settings.ColorNotes) With {.ID = publicLastID})
+                        listOfNotes.Add(New Note(it, e.X / zoom + xOffset, e.Y / zoom + yOffset, New Size(Integer.Parse(ToolStripComboBox1.Text), Integer.Parse(ToolStripComboBox1.Text)), My.Settings.ColorNotes) With {.ID = publicLastID})
                     End If
                     publicLastID += 1
                 End If
@@ -714,7 +708,7 @@ colors button#128#128#28#SkyBlue|"
         Else
             If isEditing Then
                 For Each pin As Pin In listOfPins
-                    If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle(e.Location.X - xOffset, e.Location.Y - yOffset, 0, 0)).IsEmpty Then
+                    If Not Rectangle.Intersect(New Rectangle(pin.X, pin.Y, 20, 20), New Rectangle((e.Location.X - xOffset) / zoom, (e.Location.Y - yOffset) / zoom, 0, 0)).IsEmpty Then
                         Dim i = 0
                         For Each conn As Connection In listOfConnections
                             If conn.StartingLocation.Equals(startingPinTempValue) And conn.DestinationLocation.Equals(pin) Then
@@ -759,7 +753,7 @@ colors button#128#128#28#SkyBlue|"
     End Sub
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ToolStripComboBox1.Text = "256"
+        ToolStripComboBox1.Text = "128"
         PrebuildBoard()
         SaveTiledBackground()
         PictureBox1.Dock = DockStyle.Fill
@@ -828,5 +822,18 @@ colors button#128#128#28#SkyBlue|"
 
     Private Sub ToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles ToolStripMenuItem1.Click
         Dialog1.ShowDialog(Me)
+    End Sub
+
+    Private Sub MenuStrip1_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs) Handles MenuStrip1.ItemClicked
+        e.ClickedItem.BackColor = SystemColors.Highlight
+        e.ClickedItem.Enabled = False
+        e.ClickedItem.Invalidate()
+        Dim t As New Threading.Thread(Sub()
+                                          Threading.Thread.Sleep(500)
+                                          e.ClickedItem.BackColor = SystemColors.Control
+                                          e.ClickedItem.Enabled = True
+                                          e.ClickedItem.Invalidate()
+                                      End Sub)
+        t.Start()
     End Sub
 End Class

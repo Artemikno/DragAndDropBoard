@@ -58,6 +58,7 @@ Partial Class Form1
         'OpenToolStripMenuItem
         '
         Me.OpenToolStripMenuItem.Name = "OpenToolStripMenuItem"
+        Me.OpenToolStripMenuItem.ShortcutKeyDisplayString = ""
         Me.OpenToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.OpenToolStripMenuItem.Text = "Open..."
         '
@@ -77,13 +78,15 @@ Partial Class Form1
         'InToolStripMenuItem
         '
         Me.InToolStripMenuItem.Name = "InToolStripMenuItem"
-        Me.InToolStripMenuItem.Size = New System.Drawing.Size(102, 22)
+        Me.InToolStripMenuItem.ShortcutKeyDisplayString = ""
+        Me.InToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.InToolStripMenuItem.Text = "In"
         '
         'OutToolStripMenuItem
         '
         Me.OutToolStripMenuItem.Name = "OutToolStripMenuItem"
-        Me.OutToolStripMenuItem.Size = New System.Drawing.Size(102, 22)
+        Me.OutToolStripMenuItem.ShortcutKeyDisplayString = ""
+        Me.OutToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.OutToolStripMenuItem.Text = "Out"
         '
         'ResetToolStripMenuItem1
